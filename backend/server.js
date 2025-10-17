@@ -1,23 +1,42 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import connectDB from "./config/db.js";
-import userRoutes from "./routes/userRoutes.js";
-import listingRoutes from "./routes/listingRoutes.js";
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const connectDB = require("./shared/middlewares/connect-db");
+const errorHandler = require("./shared/middlewares/error-handler");
 
-dotenv.config();
-const app = express();
+// Import routes
+const { usersRoute } = require("./modules/users/users-routes");
+const { listingsRoute } = require("./modules/listings/listings-routes");
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
+const port = process.env.PORT || 5000;
+const hostname = "localhost";
 
-// Connect to MongoDB
+const server = express();
+
+// Application-level middlewares
+server.use(cors());
+server.use(express.json());
+server.use(express.urlencoded({ extended: true }));
+
+// Connect to database
 connectDB();
 
-// Dummy routes
-app.use("/api/users", userRoutes);
-app.use("/api/listings", listingRoutes);
+// Mount routes
+server.use("/api", usersRoute);
+server.use("/api", listingsRoute);
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// 404 Not Found middleware
+server.use((req, res) => {
+  res.status(404).json({ 
+    error: "Route not found",
+    message: `${req.method} ${req.path} not found` 
+  });
+});
+
+// Error handling middleware
+server.use(errorHandler);
+
+server.listen(port, hostname, (error) => {
+  if (error) console.log(error.message);
+  else console.log(`Nexus Hub server running on http://${hostname}:${port}`);
+});
