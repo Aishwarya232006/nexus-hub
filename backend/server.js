@@ -1,15 +1,18 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const connectDB = require("./shared/middlewares/connect-db");
+const connectDB = require("./config/db");  // Your existing DB connection
 const errorHandler = require("./shared/middlewares/error-handler");
 
-// Import routes
+// Import NEW modular routes
 const { usersRoute } = require("./modules/users/users-routes");
 const { listingsRoute } = require("./modules/listings/listings-routes");
 
+// Import existing routes (keep for compatibility)
+const userRoutes = require("./routes/users/usersRoutes");
+const listingRoutes = require("./routes/listings/listingsRoutes");
+
 const port = process.env.PORT || 5000;
-const hostname = "localhost";
 
 const server = express();
 
@@ -18,12 +21,16 @@ server.use(cors());
 server.use(express.json());
 server.use(express.urlencoded({ extended: true }));
 
-// Connect to database
+// Connect to database (your existing)
 connectDB();
 
-// Mount routes
-server.use("/api", usersRoute);
-server.use("/api", listingsRoute);
+// Mount NEW modular routes (Phase 2)
+server.use("/api/v2", usersRoute);      // New version
+server.use("/api/v2", listingsRoute);   // New version
+
+// Mount existing routes (Phase 1 - keep working)
+server.use("/api/v1/users", userRoutes);
+server.use("/api/v1/listings", listingRoutes);
 
 // 404 Not Found middleware
 server.use((req, res) => {
@@ -36,7 +43,7 @@ server.use((req, res) => {
 // Error handling middleware
 server.use(errorHandler);
 
-server.listen(port, hostname, (error) => {
+server.listen(port, (error) => {
   if (error) console.log(error.message);
-  else console.log(`Nexus Hub server running on http://${hostname}:${port}`);
+  else console.log(`Nexus Hub server running on port ${port}`);
 });
