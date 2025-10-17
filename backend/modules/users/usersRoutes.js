@@ -1,9 +1,61 @@
-import express from "express";
-const router = express.Router();
+const { Router } = require("express");
+const createUserRules = require("./middlewares/create-rules");
+const updateUserRules = require("./middlewares/update-rules");
+const UserModel = require("./users-model");
 
-// Dummy routes for Phase 1
-router.get("/", (req, res) => res.json({ message: "Get all users (dummy)" }));
-router.post("/signup", (req, res) => res.json({ message: "Signup (dummy)" }));
-router.post("/login", (req, res) => res.json({ message: "Login (dummy)" }));
+const usersRoute = Router();
 
-export default router;
+// GET all users
+usersRoute.get("/users", async (req, res) => {
+  try {
+    const users = await UserModel.getAllUsers();
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to retrieve users" });
+  }
+});
+
+// GET user by ID
+usersRoute.get("/users/:id", async (req, res) => {
+  try {
+    const user = await UserModel.getUserById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({ error: "Error retrieving user" });
+  }
+});
+
+// CREATE new user
+usersRoute.post("/users", createUserRules, async (req, res) => {
+  try {
+    const newUser = await UserModel.createUser(req.body);
+    res.status(201).json(newUser);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to create user" });
+  }
+});
+
+// UPDATE user
+usersRoute.put("/users/:id", updateUserRules, async (req, res) => {
+  try {
+    const updatedUser = await UserModel.updateUser(req.params.id, req.body);
+    if (!updatedUser) return res.status(404).json({ message: "User not found" });
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to update user" });
+  }
+});
+
+// DELETE user
+usersRoute.delete("/users/:id", async (req, res) => {
+  try {
+    const deletedUser = await UserModel.deleteUser(req.params.id);
+    if (!deletedUser) return res.status(404).json({ message: "User not found" });
+    res.status(200).json(deletedUser);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to delete user" });
+  }
+});
+
+module.exports = { usersRoute };
