@@ -4,13 +4,9 @@ const cors = require("cors");
 const connectDB = require("./config/db");
 const errorHandler = require("./shared/middlewares/error-handler");
 
-// CORRECT IMPORT NAMES - without hyphens
+// Import Phase 2 modular routes
 const { usersRoute } = require("./modules/users/usersRoutes");
 const { listingsRoute } = require("./modules/listings/listingsRoutes");
-
-// Import existing routes
-const userRoutes = require("./routes/users/usersRoutes");
-const listingRoutes = require("./routes/listings/listingsRoutes");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -27,7 +23,7 @@ connectDB();
 app.get("/", (req, res) => {
   res.json({ 
     message: "Nexus Hub API Server is running",
-    version: "Phase 2",
+    version: "Phase 2 - Modular Architecture",
     status: "Operational"
   });
 });
@@ -54,10 +50,6 @@ app.get("/api/status", (req, res) => {
 // Mount Phase 2 modular routes
 app.use("/api/v2", usersRoute);
 app.use("/api/v2", listingsRoute);
-
-// Mount Phase 1 routes
-app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/listings", listingRoutes);
 
 // 404 Not Found handler
 app.use((req, res) => {

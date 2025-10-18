@@ -1,6 +1,7 @@
 const { Router } = require("express");
-const createUserRules = require("./middlewares/create-rules");
-const updateUserRules = require("./middlewares/update-rules");
+// Comment out middleware imports temporarily to test
+// const createUserRules = require("./middlewares/create-rules");
+// const updateUserRules = require("./middlewares/update-rules");
 const UserModel = require("./users-model");
 
 const usersRoute = Router();
@@ -26,9 +27,18 @@ usersRoute.get("/users/:id", async (req, res) => {
   }
 });
 
-// CREATE new user
-usersRoute.post("/users", createUserRules, async (req, res) => {
+// CREATE new user - TEMPORARILY COMMENT OUT VALIDATION
+usersRoute.post("/users", async (req, res) => {
   try {
+    // Simple validation
+    const { name, email, experienceLevel } = req.body;
+    if (!name || !email || !experienceLevel) {
+      return res.status(400).json({ 
+        error: "Validation failed",
+        message: "Name, email, and experience level are required" 
+      });
+    }
+    
     const newUser = await UserModel.createUser(req.body);
     res.status(201).json(newUser);
   } catch (error) {
@@ -36,8 +46,8 @@ usersRoute.post("/users", createUserRules, async (req, res) => {
   }
 });
 
-// UPDATE user
-usersRoute.put("/users/:id", updateUserRules, async (req, res) => {
+// UPDATE user - TEMPORARILY COMMENT OUT VALIDATION
+usersRoute.put("/users/:id", async (req, res) => {
   try {
     const updatedUser = await UserModel.updateUser(req.params.id, req.body);
     if (!updatedUser) return res.status(404).json({ message: "User not found" });
