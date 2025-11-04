@@ -1,17 +1,30 @@
-const mongoose = require("mongoose");
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const connectDB = require("./config/db"); // This is now middleware
+const errorHandler = require("./shared/middlewares/error-handler");
 
-const connectDB = async () => {
-  try {
-    await mongoose.connect(process.env.MONGO_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log("MongoDB connected");
-  } catch (err) {
-    console.error(err.message);
-    process.exit(1);
+// Import modular routes
+const { usersRoute } = require("./modules/users/usersRoutes");
+const { listingsRoute } = require("./modules/listings/listingsRoutes");
+
+const app = express();
+const port = process.env.PORT || 5000;
+
+// ✅ FIX: Use connectDB as Express middleware
+app.use(connectDB);
+
+// Application-level middlewares
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// ... rest of your routes
+
+app.listen(port, (error) => {
+  if (error) {
+    console.log("Server error:", error.message);
+  } else {
+    console.log(`Nexus Hub server running on port ${port}`);
   }
-};
-
-// Correct export - just the function, not calling it
-module.exports = connectDB;
+});
