@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db"); // This is now middleware
-const errorHandler = require("./shared/middlewares/error-handler");
+const errorHandler = require("./shared/middlewares/error-handler").default;
 
 // Import modular routes
 const { usersRoute } = require("./modules/users/usersRoutes");
