@@ -1,9 +1,8 @@
-const { Router } = require("express");
+const express = require("express");
+const usersRoute = express.Router(); // Use express.Router() instead of Router()
 const UserService = require("./users-service");
 const createUserRules = require("./middlewares/create-rules");
 const updateUserRules = require("./middlewares/update-rules");
-
-const usersRoute = Router();
 
 // Enhanced GET with search, sort, pagination
 usersRoute.get("/users", async (req, res) => {
