@@ -1,8 +1,97 @@
 const express = require("express");
+const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const ListingService = require("./listings-service");
-const createListingRules = require("./middlewares/create-rules");
-const updateListingRules = require("./middlewares/update-rules");
+
+// Validation rules
+const createListingValidation = [
+  body("jobCategory")
+    .notEmpty()
+    .withMessage("Job category is required")
+    .isString()
+    .withMessage("Job category must be a string")
+    .trim(),
+
+  body("platform")
+    .notEmpty()
+    .withMessage("Platform is required")
+    .isString()
+    .withMessage("Platform must be a string")
+    .trim(),
+
+  body("experienceLevel")
+    .notEmpty()
+    .withMessage("Experience level is required")
+    .isIn(["Beginner", "Intermediate", "Expert", "Entry", "Mid", "Senior"])
+    .withMessage("Experience level must be valid"),
+
+  body("clientRegion")
+    .notEmpty()
+    .withMessage("Client region is required")
+    .isString()
+    .withMessage("Client region must be a string")
+    .trim(),
+
+  body("paymentMethod")
+    .notEmpty()
+    .withMessage("Payment method is required")
+    .isString()
+    .withMessage("Payment method must be a string")
+    .trim(),
+
+  body("earningsUSD")
+    .notEmpty()
+    .withMessage("Earnings USD is required")
+    .isFloat({ min: 0 })
+    .withMessage("Earnings must be a positive number"),
+
+  body("hourlyRate")
+    .notEmpty()
+    .withMessage("Hourly rate is required")
+    .isFloat({ min: 0 })
+    .withMessage("Hourly rate must be a positive number"),
+];
+
+const updateListingValidation = [
+  body("jobCategory")
+    .optional()
+    .isString()
+    .withMessage("Job category must be a string")
+    .trim(),
+
+  body("platform")
+    .optional()
+    .isString()
+    .withMessage("Platform must be a string")
+    .trim(),
+
+  body("experienceLevel")
+    .optional()
+    .isIn(["Beginner", "Intermediate", "Expert", "Entry", "Mid", "Senior"])
+    .withMessage("Experience level must be valid"),
+
+  body("clientRegion")
+    .optional()
+    .isString()
+    .withMessage("Client region must be a string")
+    .trim(),
+
+  body("paymentMethod")
+    .optional()
+    .isString()
+    .withMessage("Payment method must be a string")
+    .trim(),
+
+  body("earningsUSD")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("Earnings must be a positive number"),
+
+  body("hourlyRate")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("Hourly rate must be a positive number"),
+];
 
 // GET all listings with search, sort, pagination
 router.get("/", async (req, res) => {
@@ -67,8 +156,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// CREATE new listing with validation - FIXED
-router.post("/", createListingRules, async (req, res) => {
+// CREATE new listing with PROPER validation
+router.post("/", createListingValidation, async (req, res) => {
   try {
     // Check for validation errors
     const errors = validationResult(req);
@@ -92,8 +181,8 @@ router.post("/", createListingRules, async (req, res) => {
   }
 });
 
-// UPDATE listing with validation - FIXED
-router.put("/:id", updateListingRules, async (req, res) => {
+// UPDATE listing with PROPER validation
+router.put("/:id", updateListingValidation, async (req, res) => {
   try {
     // Check for validation errors
     const errors = validationResult(req);

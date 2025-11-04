@@ -1,8 +1,73 @@
 const express = require("express");
+const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const UserService = require("./users-service");
-const createUserRules = require("./middlewares/create-rules");
-const updateUserRules = require("./middlewares/update-rules");
+
+// Validation rules
+const createUserValidation = [
+  body("name")
+    .notEmpty()
+    .withMessage("Name is required")
+    .isString()
+    .withMessage("Name must be a string")
+    .trim(),
+
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Email must be a valid email address")
+    .normalizeEmail(),
+
+  body("experienceLevel")
+    .notEmpty()
+    .withMessage("Experience level is required")
+    .isIn(["Beginner", "Intermediate", "Expert", "Entry", "Mid", "Senior"])
+    .withMessage("Experience level must be valid"),
+
+  body("hourlyRate")
+    .notEmpty()
+    .withMessage("Hourly rate is required")
+    .isFloat({ min: 0 })
+    .withMessage("Hourly rate must be a positive number"),
+
+  body("region")
+    .notEmpty()
+    .withMessage("Region is required")
+    .isString()
+    .withMessage("Region must be a string")
+    .trim(),
+];
+
+const updateUserValidation = [
+  body("name")
+    .optional()
+    .isString()
+    .withMessage("Name must be a string")
+    .trim(),
+
+  body("email")
+    .optional()
+    .isEmail()
+    .withMessage("Email must be a valid email address")
+    .normalizeEmail(),
+
+  body("experienceLevel")
+    .optional()
+    .isIn(["Beginner", "Intermediate", "Expert", "Entry", "Mid", "Senior"])
+    .withMessage("Experience level must be valid"),
+
+  body("hourlyRate")
+    .optional()
+    .isFloat({ min: 0 })
+    .withMessage("Hourly rate must be a positive number"),
+
+  body("region")
+    .optional()
+    .isString()
+    .withMessage("Region must be a string")
+    .trim(),
+];
 
 // Enhanced GET with search, sort, pagination
 router.get("/", async (req, res) => {
@@ -51,8 +116,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// CREATE user with validation - FIXED
-router.post("/", createUserRules, async (req, res) => {
+// CREATE user with PROPER validation
+router.post("/", createUserValidation, async (req, res) => {
   try {
     // Check for validation errors
     const errors = validationResult(req);
@@ -76,8 +141,8 @@ router.post("/", createUserRules, async (req, res) => {
   }
 });
 
-// UPDATE user with validation - FIXED
-router.put("/:id", updateUserRules, async (req, res) => {
+// UPDATE user with PROPER validation
+router.put("/:id", updateUserValidation, async (req, res) => {
   try {
     // Check for validation errors
     const errors = validationResult(req);

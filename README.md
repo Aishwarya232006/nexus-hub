@@ -192,3 +192,101 @@ Dependencies Added
     express-validator for input validation
 
     csv-parser for CSV file processing
+
+# Nexus Hub - Freelancer Earnings Tracker
+
+## Phase 3: Database Integration with MongoDB Atlas
+
+### Phase 3 Completed Tasks:
+
+#### 1. MongoDB Atlas Setup
+- Created database in MongoDB Atlas
+- Configured connection string with proper authentication
+
+#### 2. Environment Configuration
+- Installed `dotenv` as dev dependency
+- Created `.env` file with MongoDB URI and environment variables
+- Added `.env` to `.gitignore` for security
+
+#### 3. Database Connection Middleware
+- Created `shared/middlewares/connect-db.js`
+- Implemented MongoDB connection using Mongoose
+- Integrated connection middleware in `server.js`
+
+#### 4. Mongoose Schemas & Models
+**Users Schema (`modules/users/users-model.js`):**
+- Defined schema matching Phase 2 data structure
+- Added required fields, data types, and validations
+- Included timestamps (createdAt, updatedAt)
+
+**Listings Schema (`modules/listings/listings-model.js`):**
+- Created schema reflecting CSV data structure
+- Added appropriate data types and constraints
+- Included validation for required fields
+
+#### 5. CRUD Operations with Mongoose
+**Users Module:**
+- `GET /api/users` - Get all users with search, sort, pagination
+- `GET /api/users/:id` - Get user by ID
+- `POST /api/users` - Create new user
+- `PUT /api/users/:id` - Update user
+- `DELETE /api/users/:id` - Delete user
+
+**Listings Module:**
+- `GET /api/listings` - Get all listings with search, sort, pagination
+- `GET /api/listings/:id` - Get listing by ID
+- `POST /api/listings` - Create new listing
+- `PUT /api/listings/:id` - Update listing
+- `DELETE /api/listings/:id` - Delete listing
+
+#### 6. Enhanced Features
+**Search, Sort & Pagination:**
+- Implemented search across multiple fields
+- Added sorting by various criteria
+- Created pagination with metadata
+- Built filter options endpoint
+
+**Validation:**
+- Express-validator middleware for request validation
+- Custom validation rules for both users and listings
+- Proper error handling for validation failures
+
+#### 7. Testing
+- Tested all CRUD operations using Postman
+- Verified MongoDB connection and data persistence
+- Confirmed search, sort, and pagination functionality
+- Validated error handling and response formats
+
+### API Endpoints
+
+#### Users
+- `GET /api/users` - Get all users (supports search, sort, pagination)
+- `GET /api/users/:id` - Get user by ID
+- `POST /api/users` - Create new user
+- `PUT /api/users/:id` - Update user
+- `DELETE /api/users/:id` - Delete user
+
+#### Listings
+- `GET /api/listings` - Get all listings (supports search, sort, pagination)
+- `GET /api/listings/filters/options` - Get available filter options
+- `GET /api/listings/:id` - Get listing by ID
+- `POST /api/listings` - Create new listing
+- `PUT /api/listings/:id` - Update listing
+- `DELETE /api/listings/:id` - Delete listing
+
+#### System
+- `GET /api/health` - Health check endpoint
+- `GET /` - Root endpoint
+
+### Technologies Used
+- Node.js & Express.js
+- MongoDB Atlas & Mongoose ODM
+- Express Validator
+- CORS middleware
+- Environment variables with dotenv
+
+### Environment Variables
+```env
+MONGO_URI=your_mongodb_atlas_connection_string
+PORT=5000
+NODE_ENV=development
