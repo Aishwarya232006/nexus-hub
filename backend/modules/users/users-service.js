@@ -1,8 +1,6 @@
 const User = require("./users-model");
 
-const User = require("./users-model");
-
-// ✅ PHASE 3: Mongoose CRUD Operations
+// PHASE 3: Mongoose CRUD Operations
 class UserService {
   // CREATE
   async createUser(userData) {
