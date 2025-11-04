@@ -5,8 +5,8 @@ const connectDB = require("./shared/middlewares/connect-db");
 const errorHandler = require("./shared/middlewares/error-handler");
 
 // Import modular routes
-const usersRoute = require("./modules/users/usersRoutes");
-const listingsRoute = require("./modules/listings/listingsRoutes");
+const usersRouter = require("./modules/users/usersRoutes");
+const listingsRouter = require("./modules/listings/listingsRoutes");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -20,8 +20,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use("/api/users", usersRoute);
-app.use("/api/listings", listingsRoute);
+app.use("/api/users", usersRouter);
+app.use("/api/listings", listingsRouter);
 
 // Health check route
 app.get("/api/health", (req, res) => {
