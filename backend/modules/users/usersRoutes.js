@@ -1,5 +1,7 @@
 const express = require("express");
-const usersRoute = express.Router();
+
+// Use this exact pattern - no variable declaration for Router
+const usersRoute = require("express").Router();
 const UserService = require("./users-service");
 const createUserRules = require("./middlewares/create-rules");
 const updateUserRules = require("./middlewares/update-rules");
