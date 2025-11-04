@@ -1,114 +1,84 @@
-const { Router } = require("express");
-const UserService = require("./users-service"); // Updated import
+const mongoose = require("mongoose");
 
-const usersRoute = Router();
-
-// PHASE 3: Enhanced GET with search, sort, pagination
-usersRoute.get("/users", async (req, res) => {
-  try {
-    const result = await UserService.getAllUsers(req.query);
-    
-    res.status(200).json({
-      success: true,
-      count: result.users.length,
-      pagination: {
-        currentPage: result.currentPage,
-        totalPages: result.totalPages,
-        totalUsers: result.total,
-        hasNext: result.currentPage < result.totalPages,
-        hasPrev: result.currentPage > 1
-      },
-      data: result.users
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      error: "Failed to retrieve users" 
-    });
+// PHASE 3: Mongoose Schema matching Phase 2 structure
+const userSchema = new mongoose.Schema({
+  freelancerId: {
+    type: String,
+    required: [true, "Freelancer ID is required"],
+    unique: true
+  },
+  name: {
+    type: String,
+    required: [true, "Name is required"],
+    trim: true
+  },
+  email: {
+    type: String,
+    required: [true, "Email is required"],
+    unique: true,
+    lowercase: true,
+    trim: true
+  },
+  experienceLevel: {
+    type: String,
+    required: [true, "Experience level is required"],
+    enum: ["Beginner", "Intermediate", "Expert", "Entry", "Mid", "Senior"]
+  },
+  hourlyRate: {
+    type: Number,
+    required: [true, "Hourly rate is required"],
+    min: 0
+  },
+  jobSuccessRate: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  skills: [String],
+  region: {
+    type: String,
+    required: [true, "Region is required"]
+  },
+  platform: {
+    type: String,
+    required: [true, "Platform is required"]
+  },
+  earningsUSD: {
+    type: Number,
+    min: 0
+  },
+  clientRating: {
+    type: Number,
+    min: 0,
+    max: 5
+  },
+  jobsCompleted: {
+    type: Number,
+    min: 0
+  },
+  jobDurationDays: {
+    type: Number,
+    min: 0
+  },
+  projectType: String,
+  rehireRate: {
+    type: Number,
+    min: 0,
+    max: 100
+  },
+  marketingSpend: {
+    type: Number,
+    min: 0
+  },
+  paymentMethod: String,
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
+}, {
+  timestamps: true // Adds createdAt and updatedAt automatically
 });
 
-// GET user by ID
-usersRoute.get("/users/:id", async (req, res) => {
-  try {
-    const user = await UserService.getUserById(req.params.id);
-    if (!user) {
-      return res.status(404).json({ 
-        success: false,
-        message: "User not found" 
-      });
-    }
-    res.status(200).json({
-      success: true,
-      data: user
-    });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false,
-      error: "Error retrieving user" 
-    });
-  }
-});
+const User = mongoose.model("User", userSchema);
 
-// CREATE user
-usersRoute.post("/users", async (req, res) => {
-  try {
-    const newUser = await UserService.createUser(req.body);
-    res.status(201).json({
-      success: true,
-      data: newUser
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// UPDATE user
-usersRoute.put("/users/:id", async (req, res) => {
-  try {
-    const updatedUser = await UserService.updateUser(req.params.id, req.body);
-    if (!updatedUser) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      });
-    }
-    res.status(200).json({
-      success: true,
-      data: updatedUser
-    });
-  } catch (error) {
-    res.status(400).json({
-      success: false,
-      error: error.message
-    });
-  }
-});
-
-// DELETE user
-usersRoute.delete("/users/:id", async (req, res) => {
-  try {
-    const deletedUser = await UserService.deleteUser(req.params.id);
-    if (!deletedUser) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found"
-      });
-    }
-    res.status(200).json({
-      success: true,
-      message: "User deleted successfully",
-      data: deletedUser
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: "Failed to delete user"
-    });
-  }
-});
-
-module.exports = { usersRoute };
+module.exports = User;
