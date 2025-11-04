@@ -1,11 +1,11 @@
 const express = require("express");
-const usersRoute = express.Router(); // Use express.Router() instead of Router()
+const usersRoute = express.Router();
 const UserService = require("./users-service");
 const createUserRules = require("./middlewares/create-rules");
 const updateUserRules = require("./middlewares/update-rules");
 
 // Enhanced GET with search, sort, pagination
-usersRoute.get("/users", async (req, res) => {
+usersRoute.get("/", async (req, res) => {
   try {
     const result = await UserService.getAllUsers(req.query);
     
@@ -30,7 +30,7 @@ usersRoute.get("/users", async (req, res) => {
 });
 
 // GET user by ID
-usersRoute.get("/users/:id", async (req, res) => {
+usersRoute.get("/:id", async (req, res) => {
   try {
     const user = await UserService.getUserById(req.params.id);
     if (!user) {
@@ -52,7 +52,7 @@ usersRoute.get("/users/:id", async (req, res) => {
 });
 
 // CREATE user with validation
-usersRoute.post("/users", createUserRules, async (req, res) => {
+usersRoute.post("/", createUserRules, async (req, res) => {
   try {
     const newUser = await UserService.createUser(req.body);
     res.status(201).json({
@@ -68,7 +68,7 @@ usersRoute.post("/users", createUserRules, async (req, res) => {
 });
 
 // UPDATE user with validation
-usersRoute.put("/users/:id", updateUserRules, async (req, res) => {
+usersRoute.put("/:id", updateUserRules, async (req, res) => {
   try {
     const updatedUser = await UserService.updateUser(req.params.id, req.body);
     if (!updatedUser) {
@@ -90,7 +90,7 @@ usersRoute.put("/users/:id", updateUserRules, async (req, res) => {
 });
 
 // DELETE user
-usersRoute.delete("/users/:id", async (req, res) => {
+usersRoute.delete("/:id", async (req, res) => {
   try {
     const deletedUser = await UserService.deleteUser(req.params.id);
     if (!deletedUser) {
@@ -112,4 +112,4 @@ usersRoute.delete("/users/:id", async (req, res) => {
   }
 });
 
-module.exports = { usersRoute };
+module.exports = usersRoute;
