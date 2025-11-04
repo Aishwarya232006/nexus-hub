@@ -1,10 +1,6 @@
-import fs from 'fs';
-import csv from 'csv-parser';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const fs = require('fs');
+const csv = require('csv-parser');
+const path = require('path');
 
 class CSVDataService {
   constructor(filePath) {
@@ -81,4 +77,4 @@ class CSVDataService {
 const usersService = new CSVDataService('../data/freelancer_earnings_bd.csv');
 const listingsService = new CSVDataService('../data/freelancer_earnings_bd.csv');
 
-export { usersService, listingsService };
+module.exports = { usersService, listingsService };
