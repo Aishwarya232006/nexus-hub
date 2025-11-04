@@ -11,7 +11,7 @@ const { listingsRoute } = require("./modules/listings/listingsRoutes");
 const app = express();
 const port = process.env.PORT || 5000;
 
-// ✅ FIX: Use connectDB as Express middleware
+// FIX: Use connectDB as Express middleware
 app.use(connectDB);
 
 // Application-level middlewares
