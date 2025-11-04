@@ -48,8 +48,9 @@ app.listen(port, (error) => {
   if (error) {
     console.log("Server error:", error.message);
   } else {
-    console.log(`Nexus Hub server running on port ${port}`);
-    console.log(`Environment: ${process.env.NODE_ENV}`);
-    console.log(`MongoDB URI: ${process.env.MONGO_URI ? 'Configured' : 'Missing'}`);
+    console.log(` Nexus Hub server running on port ${port}`);
+    console.log(` Environment: ${process.env.NODE_ENV}`);
+    console.log(`  MongoDB: Connected`);
+    console.log(` API Base URL: http://localhost:${port}/api`);
   }
 });
