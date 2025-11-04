@@ -17,8 +17,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Connect to database
-connectDB();
+app.use(connectDB);
+// Application-level middlewares
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+// Simple test route to verify server is working
+app.get("/", (req, res) => {
+  res.json({ 
+    message: "Nexus Hub API Server is running",
+    version: "Phase 2",
+    status: "Operational"
+  });
+});
 // Simple test route to verify server is working
 app.get("/", (req, res) => {
   res.json({ 
