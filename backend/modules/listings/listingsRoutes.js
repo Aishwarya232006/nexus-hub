@@ -1,5 +1,7 @@
 const express = require("express");
-const listingsRoute = express.Router();
+
+// Use this exact pattern - no variable declaration for Router
+const listingsRoute = require("express").Router();
 const ListingService = require("./listings-service");
 const createListingRules = require("./middlewares/create-rules");
 const updateListingRules = require("./middlewares/update-rules");
