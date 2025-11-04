@@ -1,11 +1,11 @@
 const express = require("express");
-const listingsRoute = express.Router(); // Use express.Router() instead of Router()
+const listingsRoute = express.Router();
 const ListingService = require("./listings-service");
 const createListingRules = require("./middlewares/create-rules");
 const updateListingRules = require("./middlewares/update-rules");
 
 // GET all listings with search, sort, pagination
-listingsRoute.get("/listings", async (req, res) => {
+listingsRoute.get("/", async (req, res) => {
   try {
     const result = await ListingService.getAllListings(req.query);
     
@@ -30,7 +30,7 @@ listingsRoute.get("/listings", async (req, res) => {
 });
 
 // GET filter options
-listingsRoute.get("/listings/filters/options", async (req, res) => {
+listingsRoute.get("/filters/options", async (req, res) => {
   try {
     const filters = await ListingService.getFilterOptions();
     res.status(200).json({
@@ -46,7 +46,7 @@ listingsRoute.get("/listings/filters/options", async (req, res) => {
 });
 
 // GET listing by ID
-listingsRoute.get("/listings/:id", async (req, res) => {
+listingsRoute.get("/:id", async (req, res) => {
   try {
     const listing = await ListingService.getListingById(req.params.id);
     if (!listing) {
@@ -68,7 +68,7 @@ listingsRoute.get("/listings/:id", async (req, res) => {
 });
 
 // CREATE new listing with validation
-listingsRoute.post("/listings", createListingRules, async (req, res) => {
+listingsRoute.post("/", createListingRules, async (req, res) => {
   try {
     const newListing = await ListingService.createListing(req.body);
     res.status(201).json({
@@ -84,7 +84,7 @@ listingsRoute.post("/listings", createListingRules, async (req, res) => {
 });
 
 // UPDATE listing with validation
-listingsRoute.put("/listings/:id", updateListingRules, async (req, res) => {
+listingsRoute.put("/:id", updateListingRules, async (req, res) => {
   try {
     const updatedListing = await ListingService.updateListing(req.params.id, req.body);
     if (!updatedListing) {
@@ -106,7 +106,7 @@ listingsRoute.put("/listings/:id", updateListingRules, async (req, res) => {
 });
 
 // DELETE listing
-listingsRoute.delete("/listings/:id", async (req, res) => {
+listingsRoute.delete("/:id", async (req, res) => {
   try {
     const deletedListing = await ListingService.deleteListing(req.params.id);
     if (!deletedListing) {
@@ -128,4 +128,4 @@ listingsRoute.delete("/listings/:id", async (req, res) => {
   }
 });
 
-module.exports = { listingsRoute };
+module.exports = listingsRoute;
