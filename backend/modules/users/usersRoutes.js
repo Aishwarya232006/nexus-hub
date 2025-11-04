@@ -1,13 +1,11 @@
 const express = require("express");
-
-// Use this exact pattern - no variable declaration for Router
-const usersRoute = require("express").Router();
+const router = express.Router();
 const UserService = require("./users-service");
 const createUserRules = require("./middlewares/create-rules");
 const updateUserRules = require("./middlewares/update-rules");
 
 // Enhanced GET with search, sort, pagination
-usersRoute.get("/", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const result = await UserService.getAllUsers(req.query);
     
@@ -32,7 +30,7 @@ usersRoute.get("/", async (req, res) => {
 });
 
 // GET user by ID
-usersRoute.get("/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const user = await UserService.getUserById(req.params.id);
     if (!user) {
@@ -54,7 +52,7 @@ usersRoute.get("/:id", async (req, res) => {
 });
 
 // CREATE user with validation
-usersRoute.post("/", createUserRules, async (req, res) => {
+router.post("/", createUserRules, async (req, res) => {
   try {
     const newUser = await UserService.createUser(req.body);
     res.status(201).json({
@@ -70,7 +68,7 @@ usersRoute.post("/", createUserRules, async (req, res) => {
 });
 
 // UPDATE user with validation
-usersRoute.put("/:id", updateUserRules, async (req, res) => {
+router.put("/:id", updateUserRules, async (req, res) => {
   try {
     const updatedUser = await UserService.updateUser(req.params.id, req.body);
     if (!updatedUser) {
@@ -92,7 +90,7 @@ usersRoute.put("/:id", updateUserRules, async (req, res) => {
 });
 
 // DELETE user
-usersRoute.delete("/:id", async (req, res) => {
+router.delete("/:id", async (req, res) => {
   try {
     const deletedUser = await UserService.deleteUser(req.params.id);
     if (!deletedUser) {
@@ -114,4 +112,4 @@ usersRoute.delete("/:id", async (req, res) => {
   }
 });
 
-module.exports = usersRoute;
+module.exports = router;
