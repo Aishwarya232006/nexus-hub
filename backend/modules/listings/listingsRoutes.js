@@ -67,9 +67,18 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// CREATE new listing with validation
+// CREATE new listing with validation - FIXED
 router.post("/", createListingRules, async (req, res) => {
   try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        success: false,
+        errors: errors.array() 
+      });
+    }
+
     const newListing = await ListingService.createListing(req.body);
     res.status(201).json({
       success: true,
@@ -83,9 +92,18 @@ router.post("/", createListingRules, async (req, res) => {
   }
 });
 
-// UPDATE listing with validation
+// UPDATE listing with validation - FIXED
 router.put("/:id", updateListingRules, async (req, res) => {
   try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        success: false,
+        errors: errors.array() 
+      });
+    }
+
     const updatedListing = await ListingService.updateListing(req.params.id, req.body);
     if (!updatedListing) {
       return res.status(404).json({
