@@ -1,9 +1,8 @@
-const { Router } = require("express");
+const express = require("express");
+const listingsRoute = express.Router(); // Use express.Router() instead of Router()
 const ListingService = require("./listings-service");
 const createListingRules = require("./middlewares/create-rules");
 const updateListingRules = require("./middlewares/update-rules");
-
-const listingsRoute = Router();
 
 // GET all listings with search, sort, pagination
 listingsRoute.get("/listings", async (req, res) => {
