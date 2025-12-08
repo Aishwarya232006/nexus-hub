@@ -1,56 +1,41 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
+
 const connectDB = require("./shared/middlewares/connect-db");
 const errorHandler = require("./shared/middlewares/error-handler");
 
-// Import modular routes
-const usersRouter = require("./modules/users/usersRoutes");
-const listingsRouter = require("./modules/listings/listingsRoutes");
+// Import routes
+const usersRoutes = require("./modules/users/usersRoutes");
+const listingsRoutes = require("./modules/listings/listingsRoutes");
+const csvDataService = require("./services/csvDataService");
 
 const app = express();
-const port = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB first
-connectDB();
+// CORS configuration - allow frontend
+app.use(cors({
+  origin: "http://localhost:3000", // Your frontend URL
+  credentials: true
+}));
 
-// Application-level middlewares
-app.use(cors());
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
-// Routes
-app.use("/api/users", usersRouter);
-app.use("/api/listings", listingsRouter);
+// Database connection
+app.use(connectDB);
 
-// Health check route
-app.get("/api/health", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Nexus Hub API is running",
-    timestamp: new Date().toISOString()
-  });
-});
+// Mount routes
+app.use("/users", usersRoutes);
+app.use("/listings", listingsRoutes);
+app.use("/csv", csvDataService);
 
-// Root route
-app.get("/", (req, res) => {
-  res.status(200).json({
-    success: true,
-    message: "Welcome to Nexus Hub Backend API",
-    version: "1.0.0"
-  });
-});
-
-// Error handler middleware
+// Error handling
 app.use(errorHandler);
 
-app.listen(port, (error) => {
-  if (error) {
-    console.log("Server error:", error.message);
-  } else {
-    console.log(` Nexus Hub server running on port ${port}`);
-    console.log(` Environment: ${process.env.NODE_ENV}`);
-    console.log(`  MongoDB: Connected`);
-    console.log(` API Base URL: http://localhost:${port}/api`);
-  }
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
