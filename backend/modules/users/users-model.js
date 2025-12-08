@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
 
-// PHASE 3: Mongoose Schema matching Phase 2 structure
 const userSchema = new mongoose.Schema({
   freelancerId: {
     type: String,
@@ -18,6 +18,17 @@ const userSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true
+  },
+  // NEW: Authentication fields
+  password: {
+    type: String,
+    required: [true, "Password is required"],
+    minlength: 6
+  },
+  role: {
+    type: String,
+    enum: ["customer", "admin"],
+    default: "customer"
   },
   experienceLevel: {
     type: String,
@@ -76,9 +87,26 @@ const userSchema = new mongoose.Schema({
     default: Date.now
   }
 }, {
-  timestamps: true // Adds createdAt and updatedAt automatically
+  timestamps: true
 });
 
-const User = mongoose.model("User", userSchema);
+// Password hashing middleware
+userSchema.pre("save", async function(next) {
+  if (!this.isModified("password")) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
+// Password comparison method
+userSchema.methods.comparePassword = async function(candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+
+const User = mongoose.model("User", userSchema);
 module.exports = User;
