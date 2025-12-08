@@ -15,5 +15,8 @@ export default defineConfig({
         secure: false,
       }
     }
+  },
+   define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
   }
 })

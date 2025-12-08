@@ -1,29 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Form, Button, Alert, Spinner, Row, Col } from 'react-bootstrap';
 import { useNavigate, useParams } from 'react-router-dom';
-import * as yup from 'yup';
-import { Formik } from 'formik';
 import listingService from '../../services/listingService';
-
-const listingSchema = yup.object().shape({
-  freelancerId: yup.string().required('Freelancer ID is required'),
-  jobCategory: yup.string().required('Job category is required'),
-  platform: yup.string().required('Platform is required'),
-  experienceLevel: yup
-    .string()
-    .oneOf(['Beginner', 'Intermediate', 'Expert', 'Entry', 'Mid', 'Senior'])
-    .required('Experience level is required'),
-  clientRegion: yup.string().required('Client region is required'),
-  paymentMethod: yup.string().required('Payment method is required'),
-  earningsUSD: yup
-    .number()
-    .positive('Earnings must be positive')
-    .required('Earnings USD is required'),
-  hourlyRate: yup
-    .number()
-    .positive('Hourly rate must be positive')
-    .required('Hourly rate is required'),
-});
 
 const ListingForm = () => {
   const { id } = useParams();
@@ -31,14 +9,8 @@ const ListingForm = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [filterOptions, setFilterOptions] = useState({
-    categories: [],
-    platforms: [],
-    experienceLevels: [],
-    regions: []
-  });
-
-  const [initialValues, setInitialValues] = useState({
+  
+  const [formData, setFormData] = useState({
     freelancerId: '',
     jobCategory: '',
     platform: '',
@@ -46,33 +18,16 @@ const ListingForm = () => {
     clientRegion: '',
     paymentMethod: '',
     earningsUSD: '',
-    hourlyRate: '',
-    jobsCompleted: '',
-    jobSuccessRate: '',
-    clientRating: '',
-    jobDurationDays: '',
-    projectType: '',
-    rehireRate: '',
-    marketingSpend: ''
+    hourlyRate: ''
   });
 
   const isEditMode = !!id;
 
   useEffect(() => {
-    fetchFilterOptions();
     if (isEditMode) {
       fetchListing();
     }
   }, [id]);
-
-  const fetchFilterOptions = async () => {
-    try {
-      const response = await listingService.getFilterOptions();
-      setFilterOptions(response.data);
-    } catch (err) {
-      console.error('Failed to fetch filter options:', err);
-    }
-  };
 
   const fetchListing = async () => {
     try {
@@ -80,7 +35,7 @@ const ListingForm = () => {
       const response = await listingService.getListingById(id);
       const listing = response.data;
       
-      setInitialValues({
+      setFormData({
         freelancerId: listing.freelancerId || '',
         jobCategory: listing.jobCategory || '',
         platform: listing.platform || '',
@@ -88,14 +43,7 @@ const ListingForm = () => {
         clientRegion: listing.clientRegion || '',
         paymentMethod: listing.paymentMethod || '',
         earningsUSD: listing.earningsUSD || '',
-        hourlyRate: listing.hourlyRate || '',
-        jobsCompleted: listing.jobsCompleted || '',
-        jobSuccessRate: listing.jobSuccessRate || '',
-        clientRating: listing.clientRating || '',
-        jobDurationDays: listing.jobDurationDays || '',
-        projectType: listing.projectType || '',
-        rehireRate: listing.rehireRate || '',
-        marketingSpend: listing.marketingSpend || ''
+        hourlyRate: listing.hourlyRate || ''
       });
     } catch (err) {
       setError('Failed to load listing data');
@@ -104,22 +52,24 @@ const ListingForm = () => {
     }
   };
 
-  const handleSubmit = async (values, { setSubmitting }) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
     try {
-      setError('');
-      setSuccess('');
-      
-      // Prepare data for API
       const listingData = {
-        ...values,
-        earningsUSD: parseFloat(values.earningsUSD),
-        hourlyRate: parseFloat(values.hourlyRate),
-        jobsCompleted: values.jobsCompleted ? parseInt(values.jobsCompleted) : undefined,
-        jobSuccessRate: values.jobSuccessRate ? parseFloat(values.jobSuccessRate) : undefined,
-        clientRating: values.clientRating ? parseFloat(values.clientRating) : undefined,
-        jobDurationDays: values.jobDurationDays ? parseInt(values.jobDurationDays) : undefined,
-        rehireRate: values.rehireRate ? parseFloat(values.rehireRate) : undefined,
-        marketingSpend: values.marketingSpend ? parseFloat(values.marketingSpend) : undefined,
+        ...formData,
+        earningsUSD: parseFloat(formData.earningsUSD),
+        hourlyRate: parseFloat(formData.hourlyRate)
       };
 
       if (isEditMode) {
@@ -130,14 +80,11 @@ const ListingForm = () => {
         setSuccess('Listing created successfully!');
       }
 
-      // Redirect after 2 seconds
       setTimeout(() => {
         navigate('/listings');
       }, 2000);
     } catch (err) {
       setError(err.response?.data?.message || 'Operation failed. Please try again.');
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -150,208 +97,141 @@ const ListingForm = () => {
       {error && <Alert variant="danger">{error}</Alert>}
       {success && <Alert variant="success">{success}</Alert>}
 
-      <Formik
-        initialValues={initialValues}
-        validationSchema={listingSchema}
-        onSubmit={handleSubmit}
-        enableReinitialize
-      >
-        {({
-          values,
-          errors,
-          touched,
-          handleChange,
-          handleBlur,
-          handleSubmit,
-          isSubmitting,
-        }) => (
-          <Form onSubmit={handleSubmit}>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Freelancer ID *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="freelancerId"
-                    value={values.freelancerId}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    isInvalid={touched.freelancerId && errors.freelancerId}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.freelancerId}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
+      <Form onSubmit={handleSubmit}>
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Freelancer ID *</Form.Label>
+              <Form.Control
+                type="text"
+                name="freelancerId"
+                value={formData.freelancerId}
+                onChange={handleChange}
+                required
+              />
+            </Form.Group>
+          </Col>
 
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Job Category *</Form.Label>
-                  <Form.Select
-                    name="jobCategory"
-                    value={values.jobCategory}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    isInvalid={touched.jobCategory && errors.jobCategory}
-                  >
-                    <option value="">Select Category</option>
-                    {filterOptions.categories.map((category, index) => (
-                      <option key={index} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </Form.Select>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.jobCategory}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Job Category *</Form.Label>
+              <Form.Control
+                type="text"
+                name="jobCategory"
+                value={formData.jobCategory}
+                onChange={handleChange}
+                required
+              />
+            </Form.Group>
+          </Col>
+        </Row>
 
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Platform *</Form.Label>
-                  <Form.Select
-                    name="platform"
-                    value={values.platform}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    isInvalid={touched.platform && errors.platform}
-                  >
-                    <option value="">Select Platform</option>
-                    {filterOptions.platforms.map((platform, index) => (
-                      <option key={index} value={platform}>
-                        {platform}
-                      </option>
-                    ))}
-                  </Form.Select>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.platform}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Platform *</Form.Label>
+              <Form.Control
+                type="text"
+                name="platform"
+                value={formData.platform}
+                onChange={handleChange}
+                required
+              />
+            </Form.Group>
+          </Col>
 
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Experience Level *</Form.Label>
-                  <Form.Select
-                    name="experienceLevel"
-                    value={values.experienceLevel}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    isInvalid={touched.experienceLevel && errors.experienceLevel}
-                  >
-                    {filterOptions.experienceLevels.map((level, index) => (
-                      <option key={index} value={level}>
-                        {level}
-                      </option>
-                    ))}
-                  </Form.Select>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.experienceLevel}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Client Region *</Form.Label>
-                  <Form.Select
-                    name="clientRegion"
-                    value={values.clientRegion}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    isInvalid={touched.clientRegion && errors.clientRegion}
-                  >
-                    <option value="">Select Region</option>
-                    {filterOptions.regions.map((region, index) => (
-                      <option key={index} value={region}>
-                        {region}
-                      </option>
-                    ))}
-                  </Form.Select>
-                  <Form.Control.Feedback type="invalid">
-                    {errors.clientRegion}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Payment Method *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="paymentMethod"
-                    value={values.paymentMethod}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    isInvalid={touched.paymentMethod && errors.paymentMethod}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.paymentMethod}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Earnings USD *</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="earningsUSD"
-                    value={values.earningsUSD}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    isInvalid={touched.earningsUSD && errors.earningsUSD}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.earningsUSD}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Hourly Rate ($) *</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="hourlyRate"
-                    value={values.hourlyRate}
-                    onChange={handleChange}
-                    onBlur={handleBlur}
-                    isInvalid={touched.hourlyRate && errors.hourlyRate}
-                  />
-                  <Form.Control.Feedback type="invalid">
-                    {errors.hourlyRate}
-                  </Form.Control.Feedback>
-                </Form.Group>
-              </Col>
-            </Row>
-
-            <div className="mt-4">
-              <Button
-                type="submit"
-                variant="primary"
-                disabled={isSubmitting}
-                className="me-2"
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Experience Level *</Form.Label>
+              <Form.Select
+                name="experienceLevel"
+                value={formData.experienceLevel}
+                onChange={handleChange}
+                required
               >
-                {isSubmitting ? 'Saving...' : isEditMode ? 'Update Listing' : 'Create Listing'}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => navigate('/listings')}
-              >
-                Cancel
-              </Button>
-            </div>
-          </Form>
-        )}
-      </Formik>
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Expert">Expert</option>
+                <option value="Entry">Entry</option>
+                <option value="Mid">Mid</option>
+                <option value="Senior">Senior</option>
+              </Form.Select>
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Client Region *</Form.Label>
+              <Form.Control
+                type="text"
+                name="clientRegion"
+                value={formData.clientRegion}
+                onChange={handleChange}
+                required
+              />
+            </Form.Group>
+          </Col>
+
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Payment Method *</Form.Label>
+              <Form.Control
+                type="text"
+                name="paymentMethod"
+                value={formData.paymentMethod}
+                onChange={handleChange}
+                required
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <Row>
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Earnings USD *</Form.Label>
+              <Form.Control
+                type="number"
+                name="earningsUSD"
+                value={formData.earningsUSD}
+                onChange={handleChange}
+                required
+              />
+            </Form.Group>
+          </Col>
+
+          <Col md={6}>
+            <Form.Group className="mb-3">
+              <Form.Label>Hourly Rate ($) *</Form.Label>
+              <Form.Control
+                type="number"
+                name="hourlyRate"
+                value={formData.hourlyRate}
+                onChange={handleChange}
+                required
+              />
+            </Form.Group>
+          </Col>
+        </Row>
+
+        <div className="mt-4">
+          <Button
+            type="submit"
+            variant="primary"
+            className="me-2"
+          >
+            {isEditMode ? 'Update Listing' : 'Create Listing'}
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => navigate('/listings')}
+          >
+            Cancel
+          </Button>
+        </div>
+      </Form>
     </div>
   );
 };

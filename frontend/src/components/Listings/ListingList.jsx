@@ -1,147 +1,142 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
-import { Card, Button, Spinner, Alert, Badge, ListGroup, Row, Col } from 'react-bootstrap';
+import { Table, Button, Form, Row, Col, Spinner, Alert, Card } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import listingService from '../../services/listingService';
 
-const ListingDetail = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [listing, setListing] = useState(null);
+const ListingList = () => {
+  const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    fetchListing();
-  }, [id]);
+    fetchListings();
+  }, []);
 
-  const fetchListing = async () => {
+  const fetchListings = async () => {
     try {
       setLoading(true);
-      const response = await listingService.getListingById(id);
-      setListing(response.data);
+      const response = await listingService.getListings();
+      setListings(response.data || []);
       setError('');
     } catch (err) {
-      setError('Failed to fetch listing details');
-      console.error(err);
+      console.error('Error fetching listings:', err);
+      setError('Failed to fetch listings. Please check if backend is running.');
+      setListings([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (window.confirm('Are you sure you want to delete this listing?')) {
-      try {
-        await listingService.deleteListing(id);
-        navigate('/listings');
-      } catch (err) {
-        setError('Failed to delete listing');
-      }
-    }
-  };
+  if (loading) {
+    return (
+      <div className="text-center">
+        <Spinner animation="border" />
+        <p>Loading listings...</p>
+      </div>
+    );
+  }
 
-  if (loading) return <Spinner animation="border" />;
-  if (error) return <Alert variant="danger">{error}</Alert>;
-  if (!listing) return <Alert variant="warning">Listing not found</Alert>;
+  if (error) {
+    return (
+      <Alert variant="danger">
+        <Alert.Heading>Error</Alert.Heading>
+        <p>{error}</p>
+        <Button onClick={fetchListings} variant="outline-danger">
+          Try Again
+        </Button>
+      </Alert>
+    );
+  }
 
   return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Listing Details</h2>
-        <div>
-          <Button as={Link} to={`/listings/edit/${id}`} variant="warning" className="me-2">
-            Edit Listing
-          </Button>
-          <Button variant="danger" onClick={handleDelete}>
-            Delete Listing
-          </Button>
-        </div>
-      </div>
-
-      <Row>
-        <Col md={8}>
-          <Card className="mb-4">
-            <Card.Header>
-              <h5 className="mb-0">Job Information</h5>
-            </Card.Header>
-            <Card.Body>
-              <Row>
-                <Col md={6}>
-                  <p><strong>Job Category:</strong> {listing.jobCategory}</p>
-                  <p><strong>Platform:</strong> {listing.platform}</p>
-                  <p>
-                    <strong>Experience Level:</strong>{' '}
-                    <Badge bg={
-                      listing.experienceLevel === 'Beginner' ? 'info' :
-                      listing.experienceLevel === 'Intermediate' ? 'warning' : 'success'
-                    }>
-                      {listing.experienceLevel}
-                    </Badge>
-                  </p>
-                </Col>
-                <Col md={6}>
-                  <p><strong>Client Region:</strong> {listing.clientRegion}</p>
-                  <p><strong>Payment Method:</strong> {listing.paymentMethod}</p>
-                  <p><strong>Project Type:</strong> {listing.projectType || 'N/A'}</p>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-
-          <Card className="mb-4">
-            <Card.Header>
-              <h5 className="mb-0">Financial Information</h5>
-            </Card.Header>
-            <Card.Body>
-              <Row>
-                <Col md={6}>
-                  <p><strong>Earnings:</strong> ${listing.earningsUSD}</p>
-                  <p><strong>Hourly Rate:</strong> ${listing.hourlyRate}/hr</p>
-                  <p><strong>Marketing Spend:</strong> ${listing.marketingSpend || 0}</p>
-                </Col>
-                <Col md={6}>
-                  <p><strong>Jobs Completed:</strong> {listing.jobsCompleted || 0}</p>
-                  <p><strong>Job Success Rate:</strong> {listing.jobSuccessRate || 0}%</p>
-                  <p><strong>Rehire Rate:</strong> {listing.rehireRate || 0}%</p>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        <Col md={4}>
-          <Card className="mb-4">
-            <Card.Header>
-              <h5 className="mb-0">Performance Metrics</h5>
-            </Card.Header>
-            <Card.Body>
-              <ListGroup variant="flush">
-                <ListGroup.Item>
-                  <strong>Client Rating:</strong> {listing.clientRating ? `${listing.clientRating}/5` : 'N/A'}
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Job Duration:</strong> {listing.jobDurationDays || 0} days
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Created:</strong>{' '}
-                  {new Date(listing.createdAt).toLocaleDateString()}
-                </ListGroup.Item>
-                <ListGroup.Item>
-                  <strong>Last Updated:</strong>{' '}
-                  {new Date(listing.updatedAt).toLocaleDateString()}
-                </ListGroup.Item>
-              </ListGroup>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      <div className="mt-4">
-        <Button as={Link} to="/listings" variant="secondary">
-          ← Back to Listings
+        <h2>Listings</h2>
+        <Button as={Link} to="/listings/create" variant="success">
+          + Add New Listing
         </Button>
       </div>
+
+      {listings.length === 0 ? (
+        <Card className="text-center p-5">
+          <Card.Body>
+            <Card.Title>No Listings Found</Card.Title>
+            <Card.Text>
+              You haven't created any listings yet. Start by adding your first listing!
+            </Card.Text>
+            <Button as={Link} to="/listings/create" variant="primary" size="lg">
+              Create Your First Listing
+            </Button>
+          </Card.Body>
+        </Card>
+      ) : (
+        <>
+          <Row className="mb-4">
+            <Col md={6}>
+              <Form.Control
+                type="text"
+                placeholder="Search listings by job category or platform..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </Col>
+          </Row>
+
+          <Table striped bordered hover responsive>
+            <thead>
+              <tr>
+                <th>Job Category</th>
+                <th>Platform</th>
+                <th>Experience</th>
+                <th>Earnings</th>
+                <th>Hourly Rate</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {listings.map((listing) => (
+                <tr key={listing._id}>
+                  <td>{listing.jobCategory}</td>
+                  <td>{listing.platform}</td>
+                  <td>
+                    <span className={`badge bg-${
+                      listing.experienceLevel === 'Beginner' ? 'info' :
+                      listing.experienceLevel === 'Intermediate' ? 'warning' : 'success'
+                    }`}>
+                      {listing.experienceLevel}
+                    </span>
+                  </td>
+                  <td>${listing.earningsUSD}</td>
+                  <td>${listing.hourlyRate}/hr</td>
+                  <td>
+                    <Button
+                      as={Link}
+                      to={`/listings/${listing._id}`}
+                      variant="info"
+                      size="sm"
+                      className="me-2"
+                    >
+                      View
+                    </Button>
+                    <Button
+                      as={Link}
+                      to={`/listings/edit/${listing._id}`}
+                      variant="warning"
+                      size="sm"
+                      className="me-2"
+                    >
+                      Edit
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </>
+      )}
     </div>
   );
 };
 
-export default ListingDetail;
+export default ListingList;

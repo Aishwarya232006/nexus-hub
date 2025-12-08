@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Alert, Spinner } from 'react-bootstrap';
+import { Form, Button, Alert, Spinner, Row, Col } from 'react-bootstrap'; // Fixed import
 import { useNavigate, useParams } from 'react-router-dom';
 import * as yup from 'yup';
 import { Formik } from 'formik';
