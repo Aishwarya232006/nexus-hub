@@ -14,11 +14,19 @@ import UsersPage from './pages/UsersPage';
 import ListingsPage from './pages/ListingsPage';
 import CreateUser from './pages/CreateUser';
 import CreateListing from './pages/CreateListing';
-import UserDetail from './pages/UserDetail';           // ← Changed
-import ListingDetail from './pages/ListingDetail';     // ← Changed
-import EditUser from './pages/EditUser';               // ← Changed
-import EditListing from './pages/EditListing';         // ← Changed
+import UserDetail from './pages/UserDetail';
+import ListingDetail from './pages/ListingDetail';
+import EditUser from './pages/EditUser';
+import EditListing from './pages/EditListing';
 import NotFound from './pages/NotFound';
+
+// NEW Auth Pages
+import Login from './pages/Auth/Login';
+import Register from './pages/Auth/Register';
+import Unauthorized from './pages/Auth/Unauthorized';
+
+// NEW Protected Route Component
+import ProtectedRoute from './components/Auth/ProtectedRoute';
 
 function App() {
   return (
@@ -27,15 +35,43 @@ function App() {
         <NavigationBar />
         <Container className="flex-grow-1 py-4">
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/users" element={<UsersPage />} />
-            <Route path="/users/create" element={<CreateUser />} />
             <Route path="/users/:id" element={<UserDetail />} />
-            <Route path="/users/edit/:id" element={<EditUser />} />
             <Route path="/listings" element={<ListingsPage />} />
-            <Route path="/listings/create" element={<CreateListing />} />
             <Route path="/listings/:id" element={<ListingDetail />} />
-            <Route path="/listings/edit/:id" element={<EditListing />} />
+            
+            {/* NEW Auth Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/unauthorized" element={<Unauthorized />} />
+            
+            {/* Protected Routes - Only accessible when logged in */}
+            <Route path="/users/create" element={
+              <ProtectedRoute requiredRoles={['customer', 'admin']}>
+                <CreateUser />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/users/edit/:id" element={
+              <ProtectedRoute requiredRoles={['customer', 'admin']}>
+                <EditUser />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/listings/create" element={
+              <ProtectedRoute requiredRoles={['customer', 'admin']}>
+                <CreateListing />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/listings/edit/:id" element={
+              <ProtectedRoute requiredRoles={['customer', 'admin']}>
+                <EditListing />
+              </ProtectedRoute>
+            } />
+            
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Container>

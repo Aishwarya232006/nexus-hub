@@ -1,7 +1,8 @@
 const express = require("express");
-const { body, validationResult } = require("express-validator");
+const { body, validationResult } = require("express-validator"); 
 const router = express.Router();
 const UserService = require("./users-service");
+const authorize = require("../../shared/middlewares/authorize");
 
 // Validation rules
 const createUserValidation = [
@@ -29,7 +30,7 @@ const createUserValidation = [
     .notEmpty()
     .withMessage("Hourly rate is required")
     .isFloat({ min: 0 })
-    .withMessage("Hourly rate must be a positive number"),
+    .withMessage("Hourly rate must be a positive number"),       
 
   body("region")
     .notEmpty()
@@ -60,7 +61,7 @@ const updateUserValidation = [
   body("hourlyRate")
     .optional()
     .isFloat({ min: 0 })
-    .withMessage("Hourly rate must be a positive number"),
+    .withMessage("Hourly rate must be a positive number"),       
 
   body("region")
     .optional()
@@ -69,11 +70,86 @@ const updateUserValidation = [
     .trim(),
 ];
 
-// Enhanced GET with search, sort, pagination
+// ========== NEW AUTHENTICATION VALIDATION RULES ==========
+const registerValidation = [
+  body("freelancerId")
+    .notEmpty()
+    .withMessage("Freelancer ID is required")
+    .isString()
+    .withMessage("Freelancer ID must be a string"),
+  
+  body("name")
+    .notEmpty()
+    .withMessage("Name is required")
+    .isString()
+    .withMessage("Name must be a string")
+    .trim(),
+
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Email must be a valid email address")
+    .normalizeEmail(),
+
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required")
+    .isLength({ min: 6 })
+    .withMessage("Password must be at least 6 characters"),
+
+  body("experienceLevel")
+    .notEmpty()
+    .withMessage("Experience level is required")
+    .isIn(["Beginner", "Intermediate", "Expert", "Entry", "Mid", "Senior"])
+    .withMessage("Experience level must be valid"),
+
+  body("hourlyRate")
+    .notEmpty()
+    .withMessage("Hourly rate is required")
+    .isFloat({ min: 0 })
+    .withMessage("Hourly rate must be a positive number"),       
+
+  body("region")
+    .notEmpty()
+    .withMessage("Region is required")
+    .isString()
+    .withMessage("Region must be a string")
+    .trim(),
+];
+
+const loginValidation = [
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Email must be valid"),
+    
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required")
+];
+
+const otpValidation = [
+  body("email")
+    .notEmpty()
+    .withMessage("Email is required")
+    .isEmail()
+    .withMessage("Email must be valid"),
+    
+  body("otp")
+    .notEmpty()
+    .withMessage("OTP is required")
+    .isLength({ min: 6, max: 6 })
+    .withMessage("OTP must be 6 digits")
+];
+
+// ===== PUBLIC ROUTES =====
+// GET all users
 router.get("/", async (req, res) => {
   try {
-    const result = await UserService.getAllUsers(req.query);
-    
+    const result = await UserService.getAllUsers(req.query);     
+
     res.status(200).json({
       success: true,
       count: result.users.length,
@@ -89,7 +165,7 @@ router.get("/", async (req, res) => {
   } catch (error) {
     res.status(500).json({ 
       success: false,
-      error: "Failed to retrieve users" 
+      error: "Failed to retrieve users"
     });
   }
 });
@@ -97,9 +173,9 @@ router.get("/", async (req, res) => {
 // GET user by ID
 router.get("/:id", async (req, res) => {
   try {
-    const user = await UserService.getUserById(req.params.id);
+    const user = await UserService.getUserById(req.params.id);   
     if (!user) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
         message: "User not found" 
       });
@@ -109,28 +185,29 @@ router.get("/:id", async (req, res) => {
       data: user
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
-      error: "Error retrieving user" 
+      error: "Error retrieving user"
     });
   }
 });
 
-// CREATE user with PROPER validation
-router.post("/", createUserValidation, async (req, res) => {
+// ========== NEW AUTHENTICATION ROUTES ==========
+// REGISTER new user
+router.post("/register", registerValidation, async (req, res) => {     
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        errors: errors.array() 
+        errors: errors.array()
       });
     }
 
-    const newUser = await UserService.createUser(req.body);
+    const newUser = await UserService.register(req.body);      
     res.status(201).json({
       success: true,
+      message: "User registered successfully",
       data: newUser
     });
   } catch (error) {
@@ -141,15 +218,69 @@ router.post("/", createUserValidation, async (req, res) => {
   }
 });
 
-// UPDATE user with PROPER validation
-router.put("/:id", updateUserValidation, async (req, res) => {
+// LOGIN - Step 1: Send OTP
+router.post("/login", loginValidation, async (req, res) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        errors: errors.array() 
+        errors: errors.array()
+      });
+    }
+
+    const { email, password } = req.body;
+    const result = await UserService.login(email, password);
+    
+    res.status(200).json({
+      success: true,
+      message: "OTP sent to your email",
+      data: result
+    });
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// VERIFY OTP - Step 2: Get Token
+router.post("/verify-otp", otpValidation, async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { email, otp } = req.body;
+    const result = await UserService.verifyOTP(email, otp);
+    
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      data: result
+    });
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ===== PROTECTED ROUTES =====
+// UPDATE user (requires login)
+router.put("/:id", authorize(["customer", "admin"]), updateUserValidation, async (req, res) => {   
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
       });
     }
 
@@ -172,8 +303,8 @@ router.put("/:id", updateUserValidation, async (req, res) => {
   }
 });
 
-// DELETE user
-router.delete("/:id", async (req, res) => {
+// DELETE user (admin only)
+router.delete("/:id", authorize(["admin"]), async (req, res) => {
   try {
     const deletedUser = await UserService.deleteUser(req.params.id);
     if (!deletedUser) {
@@ -193,6 +324,14 @@ router.delete("/:id", async (req, res) => {
       error: "Failed to delete user"
     });
   }
+});
+
+// LOGOUT
+router.post("/logout", authorize(["customer", "admin"]), async (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "Logout successful"
+  });
 });
 
 module.exports = router;

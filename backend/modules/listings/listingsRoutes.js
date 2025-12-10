@@ -2,6 +2,8 @@ const express = require("express");
 const { body, validationResult } = require("express-validator");
 const router = express.Router();
 const ListingService = require("./listings-service");
+// ========== NEW: IMPORT AUTHORIZE MIDDLEWARE ==========
+const authorize = require("../../shared/middlewares/authorize");
 
 // Validation rules
 const createListingValidation = [
@@ -93,6 +95,7 @@ const updateListingValidation = [
     .withMessage("Hourly rate must be a positive number"),
 ];
 
+// ===== PUBLIC ROUTES =====
 // GET all listings with search, sort, pagination
 router.get("/", async (req, res) => {
   try {
@@ -156,8 +159,9 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// CREATE new listing with PROPER validation
-router.post("/", createListingValidation, async (req, res) => {
+// ========== NEW: PROTECTED ROUTES WITH AUTHORIZATION ==========
+// CREATE new listing (requires login)
+router.post("/", authorize(["customer", "admin"]), createListingValidation, async (req, res) => {
   try {
     // Check for validation errors
     const errors = validationResult(req);
@@ -168,7 +172,13 @@ router.post("/", createListingValidation, async (req, res) => {
       });
     }
 
-    const newListing = await ListingService.createListing(req.body);
+    // ========== NEW: Add authenticated user ID to listing ==========
+    const listingData = {
+      ...req.body,
+      createdBy: req.account._id // From authorize middleware
+    };
+
+    const newListing = await ListingService.createListing(listingData);
     res.status(201).json({
       success: true,
       data: newListing
@@ -181,8 +191,8 @@ router.post("/", createListingValidation, async (req, res) => {
   }
 });
 
-// UPDATE listing with PROPER validation
-router.put("/:id", updateListingValidation, async (req, res) => {
+// UPDATE listing (requires login and ownership or admin)
+router.put("/:id", authorize(["customer", "admin"]), updateListingValidation, async (req, res) => {
   try {
     // Check for validation errors
     const errors = validationResult(req);
@@ -193,6 +203,25 @@ router.put("/:id", updateListingValidation, async (req, res) => {
       });
     }
 
+    // ========== NEW: Check ownership (unless admin) ==========
+    if (req.account.role !== "admin") {
+      const listing = await ListingService.getListingById(req.params.id);
+      if (!listing) {
+        return res.status(404).json({
+          success: false,
+          message: "Listing not found"
+        });
+      }
+      
+      // Check if user owns this listing
+      if (listing.createdBy && listing.createdBy.toString() !== req.account._id) {
+        return res.status(403).json({
+          success: false,
+          error: "You can only update your own listings"
+        });
+      }
+    }
+
     const updatedListing = await ListingService.updateListing(req.params.id, req.body);
     if (!updatedListing) {
       return res.status(404).json({
@@ -200,6 +229,7 @@ router.put("/:id", updateListingValidation, async (req, res) => {
         message: "Listing not found"
       });
     }
+    
     res.status(200).json({
       success: true,
       data: updatedListing
@@ -212,8 +242,8 @@ router.put("/:id", updateListingValidation, async (req, res) => {
   }
 });
 
-// DELETE listing
-router.delete("/:id", async (req, res) => {
+// DELETE listing (admin only)
+router.delete("/:id", authorize(["admin"]), async (req, res) => {
   try {
     const deletedListing = await ListingService.deleteListing(req.params.id);
     if (!deletedListing) {

@@ -1,4 +1,4 @@
-const { decodeToken } = require("../jwt-utils");
+const { decodeToken } = require("./jwt-utils");
 
 function authorize(requiredRoles = ["customer"]) {
   return (req, res, next) => {
