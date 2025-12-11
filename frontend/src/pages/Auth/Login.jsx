@@ -29,17 +29,36 @@ const Login = () => {
     setSuccess('');
 
     try {
+      console.log('Frontend Login: Attempting login with email:', formData.email);
+      console.log('Frontend Login: Password length:', formData.password.length);
+      
       const response = await api.post('/users/login', {
-        email: formData.email,
+        email: formData.email.trim(),
         password: formData.password
       });
+
+      console.log('Frontend Login: Response received:', response.data);
 
       if (response.data.success) {
         setSuccess('OTP sent to your email!');
         setStep('otp');
+      } else {
+        setError(response.data.error || 'Login failed. Please try again.');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed. Please try again.');
+      console.error('Frontend Login: Error details:', err);
+      console.error('Frontend Login: Error response:', err.response?.data);
+      console.error('Frontend Login: Error status:', err.response?.status);
+      
+      if (err.response?.status === 401) {
+        setError('Invalid email or password. Please check your credentials.');
+      } else if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else if (err.message.includes('Network Error')) {
+        setError('Cannot connect to server. Please check if backend is running.');
+      } else {
+        setError('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -51,18 +70,32 @@ const Login = () => {
     setError('');
 
     try {
+      console.log('Frontend OTP: Verifying OTP for:', formData.email);
+      console.log('Frontend OTP: OTP provided:', formData.otp);
+      
       const response = await api.post('/users/verify-otp', {
-        email: formData.email,
+        email: formData.email.trim(),
         otp: formData.otp
       });
+
+      console.log('Frontend OTP: Response received:', response.data);
 
       if (response.data.success) {
         localStorage.setItem('token', response.data.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.data.user));
         navigate('/');
+      } else {
+        setError(response.data.error || 'OTP verification failed.');
       }
     } catch (err) {
-      setError(err.response?.data?.error || 'OTP verification failed.');
+      console.error('Frontend OTP: Error details:', err);
+      console.error('Frontend OTP: Error response:', err.response?.data);
+      
+      if (err.response?.data?.error) {
+        setError(err.response.data.error);
+      } else {
+        setError('OTP verification failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
