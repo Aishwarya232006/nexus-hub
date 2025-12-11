@@ -49,36 +49,57 @@ class UserService {
   // ========== NEW AUTHENTICATION METHOD: LOGIN (STEP 1 - SEND OTP) ==========
   async login(email, password) {
     try {
+      // ADD DEBUG LOGS
+      console.log("DEBUG: Login attempt for email:", email);
+      
       const user = await User.findOne({ email: email.toLowerCase() });
       
+      console.log("DEBUG: User found:", user ? "Yes" : "No");
+      if (user) {
+        console.log("DEBUG: User has password field:", !!user.password);
+        console.log("DEBUG: Password hash exists:", user.password ? "Yes" : "No");
+      }
+      
       if (!user) {
+        console.log("DEBUG: No user found with email:", email);
         throw new Error("Invalid credentials");
       }
       
       // Verify password using the comparePassword method from user model
       const isPasswordValid = await user.comparePassword(password);
+      console.log("DEBUG: Password comparison result:", isPasswordValid);
+      
       if (!isPasswordValid) {
+        console.log("DEBUG: Password invalid for user:", user.email);
         throw new Error("Invalid credentials");
       }
       
+      console.log("DEBUG: Password verified successfully");
+      
       // Generate OTP
       const otp = randomNumberOfNDigits(6);
+      console.log("DEBUG: Generated OTP:", otp);
       
       // Save OTP to database (will auto-expire in 10 minutes)
       await OTPModel.findOneAndUpdate(
-      { email: user.email },
-      {
-        email: user.email,
-        otp: otp.toString(),
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
-      },
-      { upsert: true, new: true } 
-    );
+        { email: user.email },
+        {
+          email: user.email,
+          otp: otp.toString(),
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+        },
+        { upsert: true, new: true }
+      );
+      
+      console.log("DEBUG: OTP saved to database");
+      
       // Send OTP via email
       const emailSubject = "Your OTP for NexusHub Login";
       const emailMessage = `Hello ${user.name},\n\nYour OTP for login is: ${otp}\n\nThis OTP will expire in 10 minutes.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nNexusHub Team`;
       
+      console.log("DEBUG: Attempting to send email to:", user.email);
       await sendEmail(user.email, emailSubject, emailMessage);
+      console.log("DEBUG: Email sent successfully");
       
       return {
         email: user.email,
@@ -86,6 +107,7 @@ class UserService {
         requiresOTP: true
       };
     } catch (error) {
+      console.error("DEBUG: Login error:", error.message);
       throw new Error(`Login failed: ${error.message}`);
     }
   }
@@ -93,24 +115,44 @@ class UserService {
   // ========== NEW AUTHENTICATION METHOD: VERIFY OTP (STEP 2 - GET TOKEN) ==========
   async verifyOTP(email, otp) {
     try {
+      console.log("DEBUG: OTP verification attempt for email:", email);
+      console.log("DEBUG: OTP provided:", otp);
+      
       // Find valid OTP (not expired)
       const otpRecord = await OTPModel.findOne({
         email: email.toLowerCase(),
-        otp
+        otp: otp
       });
       
+      console.log("DEBUG: OTP record found:", otpRecord ? "Yes" : "No");
+      
       if (!otpRecord) {
+        console.log("DEBUG: No OTP record found for email:", email);
         throw new Error("Invalid or expired OTP");
       }
+      
+      // Check if OTP is expired
+      const now = new Date();
+      if (now > otpRecord.expiresAt) {
+        console.log("DEBUG: OTP expired. Expires at:", otpRecord.expiresAt, "Current time:", now);
+        await OTPModel.deleteOne({ _id: otpRecord._id });
+        throw new Error("OTP has expired");
+      }
+      
+      console.log("DEBUG: OTP is valid and not expired");
       
       // Get user
       const user = await User.findOne({ email: email.toLowerCase() });
       if (!user) {
+        console.log("DEBUG: User not found after OTP verification");
         throw new Error("User not found");
       }
       
+      console.log("DEBUG: User found for OTP verification");
+      
       // Delete used OTP
       await OTPModel.deleteOne({ _id: otpRecord._id });
+      console.log("DEBUG: OTP deleted after successful verification");
       
       // Generate JWT token
       const token = encodeToken({
@@ -121,6 +163,8 @@ class UserService {
         freelancerId: user.freelancerId
       });
       
+      console.log("DEBUG: JWT token generated");
+      
       // Remove password from response
       const userResponse = user.toObject();
       delete userResponse.password;
@@ -130,11 +174,11 @@ class UserService {
         token
       };
     } catch (error) {
+      console.error("DEBUG: OTP verification error:", error.message);
       throw new Error(`OTP verification failed: ${error.message}`);
     }
   }
 
- 
   // READ - Get all users with search, sort, pagination
   async getAllUsers(filters = {}) {
     try {
@@ -219,8 +263,8 @@ class UserService {
         id, 
         updates, 
         { 
-          new: true, // Return updated document
-          runValidators: true // Run schema validations
+          new: true,
+          runValidators: true
         }
       );
     } catch (error) {
